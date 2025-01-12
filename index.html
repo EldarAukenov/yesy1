@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Registration and Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2em;
+        }
+        .hidden {
+            display: none;
+        }
+        #comments {
+            margin-top: 20px;
+        }
+        #comments-list {
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .comment {
+            border-bottom: 1px solid #ddd;
+            padding: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Registration and Login System</h1>
+
+    <div id="registration-form" class="hidden">
+        <h2>Register</h2>
+        <input type="text" id="register-username" placeholder="Enter username" required />
+        <input type="password" id="register-password" placeholder="Enter password" required />
+        <button onclick="register()">Register</button>
+    </div>
+
+    <div id="login-form" class="hidden">
+        <h2>Login</h2>
+        <input type="text" id="login-username" placeholder="Enter username" required />
+        <input type="password" id="login-password" placeholder="Enter password" required />
+        <button onclick="login()">Login</button>
+        <button onclick="showRegistrationForm()">Register New Account</button>
+    </div>
+
+    <div id="welcome" class="hidden">
+        <h2>Welcome, <span id="user-name"></span>!</h2>
+        <button onclick="logout()">Logout</button>
+
+        <div id="comments">
+            <h3>Comments</h3>
+            <textarea id="comment-input" placeholder="Write a comment..." rows="3" style="width: 100%;"></textarea>
+            <button onclick="addComment()">Post Comment</button>
+            <div id="comments-list"></div>
+        </div>
+    </div>
+
+    <script>
+        const registrationForm = document.getElementById('registration-form');
+        const loginForm = document.getElementById('login-form');
+        const welcomeDiv = document.getElementById('welcome');
+        const userNameSpan = document.getElementById('user-name');
+        const commentsList = document.getElementById('comments-list');
+
+        let currentUsername = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+            if (users.length > 0) {
+                showLoginForm();
+            } else {
+                showRegistrationForm();
+            }
+
+            loadComments();
+        });
+
+        function register() {
+            const username = document.getElementById('register-username').value.trim();
+            const password = document.getElementById('register-password').value.trim();
+            let users = JSON.parse(localStorage.getItem('users')) || [];
+
+            if (username && password) {
+                if (users.some(user => user.username === username)) {
+                    alert('Username already exists. Please choose another one.');
+                } else {
+                    users.push({ username, password });
+                    localStorage.setItem('users', JSON.stringify(users));
+                    alert('Registration successful! You can now log in.');
+                    showLoginForm();
+                }
+            } else {
+                alert('Please enter a valid username and password.');
+            }
+        }
+
+        function login() {
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+            const users = JSON.parse(localStorage.getItem('users')) || [];
+
+            const user = users.find(user => user.username === username && user.password === password);
+
+            if (user) {
+                currentUsername = username;
+                showWelcome(username);
+            } else {
+                alert('Incorrect username or password.');
+            }
+        }
+
+        function logout() {
+            currentUsername = null;
+            showLoginForm();
+        }
+
+        function showRegistrationForm() {
+            registrationForm.classList.remove('hidden');
+            loginForm.classList.add('hidden');
+            welcomeDiv.classList.add('hidden');
+        }
+
+        function showLoginForm() {
+            registrationForm.classList.add('hidden');
+            loginForm.classList.remove('hidden');
+            welcomeDiv.classList.add('hidden');
+        }
+
+        function showWelcome(username) {
+            userNameSpan.textContent = username;
+            registrationForm.classList.add('hidden');
+            loginForm.classList.add('hidden');
+            welcomeDiv.classList.remove('hidden');
+            loadComments();
+        }
+
+        function addComment() {
+            const commentInput = document.getElementById('comment-input');
+            const commentText = commentInput.value.trim();
+            if (!commentText) {
+                alert('Comment cannot be empty.');
+                return;
+            }
+
+            let comments = JSON.parse(localStorage.getItem('comments')) || [];
+            comments.push({ username: currentUsername, text: commentText });
+            localStorage.setItem('comments', JSON.stringify(comments));
+
+            commentInput.value = '';
+            loadComments();
+        }
+
+        function loadComments() {
+            const comments = JSON.parse(localStorage.getItem('comments')) || [];
+            commentsList.innerHTML = '';
+
+            comments.forEach(comment => {
+                const commentDiv = document.createElement('div');
+                commentDiv.classList.add('comment');
+                commentDiv.textContent = `${comment.username}: ${comment.text}`;
+                commentsList.appendChild(commentDiv);
+            });
+        }
+    </script>
+</body>
+</html>
